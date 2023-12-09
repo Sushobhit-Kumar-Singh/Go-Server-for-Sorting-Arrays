@@ -1,0 +1,48 @@
+
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sync"
+)
+
+type Payload struct {
+	// Define the structure of your JSON payload here
+}
+
+func processSingle(w http.ResponseWriter, r *http.Request) {
+	var payload Payload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	// Perform sequential processing on payload
+	fmt.Fprintf(w, "Processed single request: %+v\n", payload)
+}
+
+func processConcurrent(w http.ResponseWriter, r *http.Request) {
+	var payload Payload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		// Perform concurrent processing on payload
+	}()
+	wg.Wait()
+	fmt.Fprintf(w, "Processed concurrent request: %+v\n", payload)
+}
+
+func main() {
+	http.HandleFunc("/process-single", processSingle)
+	http.HandleFunc("/process-concurrent", processConcurrent)
+
+	fmt.Println("Server is listening on port 8000...")
+	http.ListenAndServe(":8000", nil)
+}
+
